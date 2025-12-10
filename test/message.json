@@ -1,0 +1,15 @@
+{
+  "service": {
+    "id":"md-trocr"
+  },
+  "task": {
+    "id":"recognize_text"
+  },
+  "file": {
+    "type":"image",
+    "label":"htr3.jpg"
+  },
+  "process": {
+    "@rid": "#112:4228"
+  }
+}
