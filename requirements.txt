@@ -1,5 +1,5 @@
 torch==2.5.1
-torchvision==0.16.0
+torchvision==0.20.0
 
 beautifulsoup4==4.14.2
 langdetect==1.0.9
