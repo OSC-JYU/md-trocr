@@ -15,12 +15,25 @@ import numpy as np
 
 from read_polygons import process_polygons
 
+# Global variables to hold the model and processor
+global_processor = None
+global_model = None
 
 app = FastAPI(
     title="MessyDesk TrOCR API",
     description="API for TrOCR models",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    global global_processor
+    global global_model
+    try:
+        global_processor, global_model = load_custom_trocr_model()
+    except Exception as e:
+        print(f"FATAL ERROR: Could not load the model on startup: {e}")
+        exit(1)
 
 # Add CORS middleware
 app.add_middleware(
@@ -42,21 +55,7 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 processor = None
 model = None
 
-def get_processor():
-    global processor
-    if processor is None:
-        processor = TrOCRProcessor.from_pretrained("./models/multicentury-htr-model/processor")
-        #processor = TrOCRProcessor.from_pretrained("Kansallisarkisto/multicentury-htr-model",
-        #                                       use_fast=True,
-        #                                       do_resize=True)
-    return processor
 
-def get_model():
-    global model
-    if model is None:
-        model = VisionEncoderDecoderModel.from_pretrained("./models/multicentury-htr-model")
-        #model = VisionEncoderDecoderModel.from_pretrained("Kansallisarkisto/multicentury-htr-model")
-    return model
 
 # code from https://huggingface.co/Kansallisarkisto/multicentury-htr-model
 def load_custom_trocr_model():
@@ -84,6 +83,7 @@ def load_custom_trocr_model():
                                                size={'height': 192,'width': 1024})
      
     model = VisionEncoderDecoderModel.from_pretrained("Kansallisarkisto/multicentury-htr-model")
+    print("TrOCR Model loaded successfully (2.23 GB) from Hugging Face.")
     
     return processor, model
 
@@ -108,7 +108,12 @@ async def process_files(
         print("Processing files...")
         # Generate unique output ID
         output_id = str(uuid.uuid4())
-        
+
+        #  Check if model is loaded (should be from startup, but good practice)
+        if global_model is None or global_processor is None:
+            print("Model is not initialized. Server is starting up or failed to load model.")
+            raise HTTPException(status_code=503, detail="Model is not initialized. Server is starting up or failed to load model.")
+
         # Save the uploaded files
         source_path = os.path.join(UPLOAD_FOLDER, f"{output_id}_source")
         with open(source_path, "wb") as f:
@@ -139,10 +144,9 @@ async def process_files(
             print(f"Warning: could not remove original file {source_path}: {cleanup_exc}")
 
 
-        # Load processor and model if not already loaded
-        #processor = get_processor()
-        #model = get_model()
-        processor, model = load_custom_trocr_model()
+        # Use global model and processor
+        processor = global_processor
+        model = global_model
         lines = []
         
         for filename in ordered_polygons:   
