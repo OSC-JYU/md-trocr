@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import os
 import uuid
 import json
@@ -19,14 +20,9 @@ from read_polygons import process_polygons
 global_processor = None
 global_model = None
 
-app = FastAPI(
-    title="MessyDesk TrOCR API",
-    description="API for TrOCR models",
-    version="1.0.0"
-)
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     global global_processor
     global global_model
     try:
@@ -34,6 +30,15 @@ async def startup_event():
     except Exception as e:
         print(f"FATAL ERROR: Could not load the model on startup: {e}")
         exit(1)
+    yield
+    # Shutdown (if needed, add cleanup code here)
+
+app = FastAPI(
+    title="MessyDesk TrOCR API",
+    description="API for TrOCR models",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 # Add CORS middleware
 app.add_middleware(
