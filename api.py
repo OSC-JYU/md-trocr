@@ -12,6 +12,7 @@ from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 from transformers.models.vit.modeling_vit import ViTPatchEmbeddings, ViTEmbeddings
 from PIL import Image
 import numpy as np
+import torch
 
 
 from read_polygons import process_polygons
@@ -89,7 +90,14 @@ def load_custom_trocr_model():
      
     model = VisionEncoderDecoderModel.from_pretrained("Kansallisarkisto/multicentury-htr-model")
     print("TrOCR Model loaded successfully (2.23 GB) from Hugging Face.")
-    
+
+    # Move model to GPU if available
+    if torch.cuda.is_available():
+        model = model.to("cuda")
+        print("Model moved to CUDA device.")
+    else:
+        print("CUDA not available. Using CPU.")    
+
     return processor, model
 
 class ResponseData(BaseModel):
@@ -159,6 +167,10 @@ async def process_files(
                 image = Image.open(filename).convert("RGB")
                 inputs = processor(images=image, return_tensors="pt")
                 pixel_values = inputs["pixel_values"]
+                # move pixel_values to GPU if available
+                if torch.cuda.is_available():
+                    pixel_values = pixel_values.to("cuda")
+
                 generated_ids = model.generate(pixel_values)
                 generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
                 lines.append(generated_text)
