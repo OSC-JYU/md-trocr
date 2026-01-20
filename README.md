@@ -4,7 +4,39 @@
 An experimental TrOCR wrapper for https://huggingface.co/Kansallisarkisto/multicentury-htr-model
 languages: Finnish, Swedish
 
-## install and run cpu version EXTREMELY SLOW!
+## Docker (Recommended)
+
+### GPU version
+
+Build and run:
+
+	make build
+	make run
+
+Or run interactively:
+
+	make run-interactive
+
+### CPU version (EXTREMELY SLOW!)
+
+Build and run:
+
+	make build-cpu
+	make run-cpu
+
+Or run interactively:
+
+	make run-cpu-interactive
+
+### Other Docker commands
+
+	make help           # Show all available commands
+	make logs           # View container logs
+	make shell          # Access container shell
+	make stop           # Stop container
+	make clean          # Remove container and image
+
+## Local installation and run (CPU version EXTREMELY SLOW!)
 
 	python -m venv venv
 	source venv/bin/activate

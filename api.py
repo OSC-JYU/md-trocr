@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI):
     # Startup
     global global_processor
     global global_model
+    print("Loading model...this may take a while...")
     try:
         global_processor, global_model = load_custom_trocr_model()
     except Exception as e:
